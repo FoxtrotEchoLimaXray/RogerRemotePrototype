@@ -26,7 +26,8 @@ import os.log
     
     override init() {
         super.init()
-        self.centralManager = CBCentralManager(delegate: self, queue: nil)
+        let serialQueue = dispatch_queue_serial_t.main
+        self.centralManager = CBCentralManager(delegate: self, queue: serialQueue)
     }
     
     func startScan(){
