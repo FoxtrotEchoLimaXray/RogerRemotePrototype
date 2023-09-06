@@ -48,6 +48,7 @@ struct RemoteApp: App {
                     router.navigateToRoot()
                 }
             }
+            
         }
     }
 }

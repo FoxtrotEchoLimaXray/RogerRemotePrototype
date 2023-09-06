@@ -15,13 +15,11 @@ struct CharacteristicsScreen: View {
     @State var singleCharIsActive = false
     var body: some View {
         VStack {
-            
-            List(bluetoothManager.characteristics){characteristic in
-                NavigationLink(destination: SingleCharacteristicScreen(bluetoothManager: bluetoothManager,characteristic: characteristic)){
-                    Text(characteristic.description)
-                }
-            }.scrollContentBackground(.hidden)
-            
+                List(bluetoothManager.characteristics){characteristic in
+                    NavigationLink(destination: SingleCharacteristicScreen(bluetoothManager: bluetoothManager,characteristic: characteristic)){
+                        Text(characteristic.description)
+                    }
+                }.scrollContentBackground(.hidden)
         }
         .padding()
     }

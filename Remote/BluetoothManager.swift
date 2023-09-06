@@ -26,8 +26,8 @@ import os.log
     
     override init() {
         super.init()
-        let serialQueue = dispatch_queue_serial_t.main
-        self.centralManager = CBCentralManager(delegate: self, queue: serialQueue)
+        //let serialQueue = dispatch_queue_serial_t.main
+        self.centralManager = CBCentralManager(delegate: self, queue: nil)
     }
     
     func startScan(){
@@ -42,6 +42,7 @@ import os.log
     func connect(peripheral:CBPeripheral){
         centralManager?.connect(peripheral)
         os_log(.info,log: BluetoothManager.ble_log,"try connect")
+        print("lol")
     }
     
     func disconnect(){
@@ -70,18 +71,34 @@ import os.log
         connectedPeripheral?.readValue(for :characteristic)
     }
     
-    func writeCommmand(value : Data,characteristic: CBCharacteristic){
+    func writeCommmand(messageString : String,characteristic: CBCharacteristic){
         guard let peripehral = connectedPeripheral else {
             return
         }
-        if peripehral.canSendWriteWithoutResponse{
-            peripehral.writeValue(value, for: characteristic,type: .withoutResponse)
+        
+        var UInt8Array : [UInt8] = []
+        
+        messageString.forEach{ char in
+            let stringvalue = String(char)
+            let uint8value = UInt8(stringvalue)
+            guard let byte = uint8value else{
+                print("error conversion to bytes gone wrong")
+                return
+            }
+            UInt8Array.append(byte)
         }
         
+        let data : Data = Data(UInt8Array)
+        
+        if peripehral.canSendWriteWithoutResponse{
+            peripehral.writeValue(data, for: characteristic,type: .withoutResponse)
+            print("wrote \(Array(data))")
+        }
     }
     
-    func writeRequest(value : Data,characteristic: CBCharacteristic){
-        connectedPeripheral?.writeValue(value, for: characteristic,type: .withResponse)
+    func writeRequest(messageString : String,characteristic: CBCharacteristic){
+        let data = messageString.data(using: .utf8)!
+        connectedPeripheral?.writeValue(data, for: characteristic,type: .withResponse)
     }
     
     func discoverDescriptors(characteristic: CBCharacteristic){
@@ -154,17 +171,19 @@ extension BluetoothManager:CBPeripheralDelegate{
     
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        
-        guard let data = characteristic.value else {
-            // no data transmitted, handle if needed
+        if let error = error {
+            print("Characteristic value update failed: \(error.localizedDescription)")
             return
+          }
+        
+        guard let data = characteristic.value else { return }
+
+        var intlist : [Int] = []
+        for val in data {
+            intlist.append(Int(val))
         }
-        print("length : \(data.count)")
-        var intList : [Int] = []
-        for val in data{
-            intList.append(Int(val))
-        }
-        self.readValues = "\(intList)"
+        print("test")
+        self.readValues = "\(intlist)"
     }
     
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -191,7 +210,6 @@ extension BluetoothManager:CBPeripheralDelegate{
            
             print(userDescriptionDescriptor)
         }
-        print("------------------------------------------------------")
     }
      
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor descriptor: CBDescriptor, error: Error?) {
